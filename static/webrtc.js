@@ -4,15 +4,6 @@ const peer = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.co
 // 自身のICE Candidateの一覧
 const iceCandidates = [];
 
-// 自身のビデオストリームを取得
-const myMediaStream = await navigator.mediaDevices.getUserMedia({
-    video: {
-        width: 800,
-        height: 600,
-    },
-    audio: true
-});
-
 // Offer SDPの作成処理
 async function createSDPOffer() {
     const sessionDescription = await peer.createOffer();
@@ -24,6 +15,7 @@ async function createSDPOffer() {
 async function receiveSDP(sdp) {
     const sessionDescription = JSON.parse(sdp);
     await peer.setRemoteDescription(sessionDescription);
+    console.error(sdp);
 
     // Offer SDPの場合はAnswer SDPを作成
     if (sessionDescription.type === "offer") {
@@ -44,16 +36,45 @@ async function receiveICE(ice) {
     }
 }
 
-function main() {
-    const socket = io();
+async function main() {
+    // 自身のビデオストリームを取得
+    let myMediaStream = null;
+    try {
+        myMediaStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: 800,
+                height: 600,
+            },
+            audio: true
+        });
+    } catch {
+        console.log('Could not get media');
+    }
 
-    // 各種HTML要素を取得
     const myVideo = document.getElementById("my-video");
     const otherVideo = document.getElementById("other-video");
 
     // 自身のビデオストリームを設定
-    myVideo.srcObject = myMediaStream;
-    myMediaStream.getTracks().forEach((track) => peer.addTrack(track, myMediaStream));
+    if (myMediaStream != null) {
+        myVideo.srcObject = myMediaStream;
+        myMediaStream.getTracks().forEach((track) => peer.addTrack(track, myMediaStream));
+    }
+
+    // ICE Candidateが生成された時の処理
+    peer.addEventListener("icecandidate", (event) => {
+        if (event.candidate === null) return;
+        iceCandidates.push(event.candidate);
+
+        let ice = JSON.stringify(iceCandidates, null, 2);
+        socket.emit('broadcastICE', ice);
+    });
+
+    // Trackを取得した時の処理
+    peer.addEventListener("track", (event) => {
+        otherVideo.srcObject = event.streams[0];
+    });
+
+    const socket = io();
 
     socket.on('connect', () => {
         console.log('connect');
@@ -75,20 +96,6 @@ function main() {
             await receiveICE(ice);
             socket.emit('iceReceive');
         });
-    });
-
-    // ICE Candidateが生成された時の処理
-    peer.addEventListener("icecandidate", (event) => {
-        if (event.candidate === null) return;
-        iceCandidates.push(event.candidate);
-
-        let ice = JSON.stringify(iceCandidates, null, 2);
-        socket.emit('broadcastICE', ice);
-    });
-
-    // Trackを取得した時の処理
-    peer.addEventListener("track", (event) => {
-        otherVideo.srcObject = event.streams[0];
     });
 }
 
