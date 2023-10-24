@@ -14,5 +14,5 @@ export type ClientToServerEvents = {
   responseSDPOffer: (sdpOffer : string) => void;
   responseSDPAnswer: (sdpOffer : string) => void;
   broadcastICE: (ice : string) => void;
-  iceRecieve: () => void;
+  iceReceive: () => void;
 };

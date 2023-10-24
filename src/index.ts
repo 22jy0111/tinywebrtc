@@ -28,8 +28,8 @@ io.on('connection', (socket) => {
         console.log(`broadcastICE`);
         socket.broadcast.emit('broadcastICE', ice);
     });
-    socket.on('iceRecieve', () => {
-        console.log(`iceRecieve`);
+    socket.on('iceReceive', () => {
+        console.log(`iceReceive`);
     });
 
     socket.on("disconnect", (reason) => {
