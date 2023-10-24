@@ -11,54 +11,14 @@
 
 <body>
 	<div class="container mx-auto my-4">
-		<!-- ビデオ映像 -->
 		<div class="row">
 			<div class="col">
-				<p class="text-center">自分の映像</p>
+				<p class="text-center">自分</p>
 				<video class="object-fit-contain rounded w-100" id="my-video" autoplay></video>
 			</div>
 			<div class="col">
-				<p class="text-center">相手の映像</p>
+				<p class="text-center">相手</p>
 				<video class="object-fit-contain rounded w-100" id="other-video" autoplay></video>
-			</div>
-		</div>
-		<div class="mx-10">
-			<hr>
-		</div>
-
-		<!-- SDP関係 -->
-		<div class="row">
-			<div class="col">
-				<p class="text-center">SDP Output</p>
-				<textarea class="form-control" id="sdp-output" readonly rows="10"></textarea>
-				<p class="text-center my-2">
-					<button class="btn btn-block btn-primary" id="sdp-create-offer-button">SDP オファー発行</button>
-				</p>
-			</div>
-			<div class="col">
-				<p class="text-center">SDP Input</p>
-				<textarea class="form-control" id="sdp-input" rows="10"></textarea>
-				<p class="text-center my-2">
-					<button class="btn btn-block btn-primary" id="sdp-receive-button">SDP 受け取り</button>
-				</p>
-			</div>
-		</div>
-		<div class="mx-10">
-			<hr>
-		</div>
-
-		<!-- ICE Candidate関係 -->
-		<div class="row">
-			<div class="col">
-				<p class="text-center">ICE Output</p>
-				<textarea class="form-control" id="ice-output" readonly rows="10"></textarea>
-			</div>
-			<div class="col">
-				<p class="text-center">ICE Input</p>
-				<textarea class="form-control" id="ice-input" rows="10"></textarea>
-				<p class="text-center my-2">
-					<button class="btn btn-primary" id="ice-receive-button">ICE 受け取り</button>
-				</p>
 			</div>
 		</div>
 	</div>
@@ -68,7 +28,7 @@
 		integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
 		crossorigin="anonymous"></script>
 	<script src="socket.io.min.js"></script>
-	<script src="webrtc.js"></script>
+	<script src="webrtc.js" type="module"></script>
 
 </body>
 

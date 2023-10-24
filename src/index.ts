@@ -9,15 +9,31 @@ const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer);
 
 io.on('connection', (socket) => {
-    console.log(socket.id);
-    socket.emit("hello", "from server");
+    console.log(`connect: ${socket.id}`);
 
-    socket.on("message", (message) => {
-        console.log(`from client: ${message}`);
+    socket.emit('requestSDPOffer');
+    console.log(`requestSDPOffer`);
+
+    socket.on('responseSDPOffer', (sdpOffer) => {
+        //console.log(`SDPOffer: ${sdpOffer}`);
+        console.log(`SDPOffer`);
+        socket.broadcast.emit('broadcastSDPOffer', sdpOffer);
+    });
+    socket.on('responseSDPAnswer', (sdpOffer) => {
+        //console.log(`SDPAnswer: ${sdpOffer}`);
+        console.log(`SDPAnswer`);
+        socket.broadcast.emit('broadcastSDPOffer', sdpOffer);
+    });
+    socket.on('broadcastICE', (ice) => {
+        console.log(`broadcastICE`);
+        socket.broadcast.emit('broadcastICE', ice);
+    });
+    socket.on('iceRecieve', () => {
+        console.log(`iceRecieve`);
     });
 
     socket.on("disconnect", (reason) => {
-        console.log(`user disconnected. reason: ${reason}`);
+        console.log(`disconnected. reason: ${reason}`);
     });
 });
 
