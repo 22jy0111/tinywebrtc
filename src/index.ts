@@ -16,12 +16,12 @@ io.on('connection', (socket) => {
 
     socket.on('responseSDPOffer', (sdpOffer) => {
         //console.log(`SDPOffer: ${sdpOffer}`);
-        console.log(`SDPOffer`);
+        console.log(`SDPOffer: ${sdpOffer}`);
         socket.broadcast.emit('broadcastSDPOffer', sdpOffer);
     });
     socket.on('responseSDPAnswer', (sdpOffer) => {
         //console.log(`SDPAnswer: ${sdpOffer}`);
-        console.log(`SDPAnswer`);
+        console.log(`SDPAnswer: ${sdpOffer}`);
         socket.broadcast.emit('broadcastSDPOffer', sdpOffer);
     });
     socket.on('broadcastICE', (ice) => {

@@ -14,8 +14,8 @@ async function createSDPOffer() {
 // SDPの受け取り処理
 async function receiveSDP(sdp) {
     const sessionDescription = JSON.parse(sdp);
-    await peer.setRemoteDescription(sessionDescription);
     console.error(sdp);
+    await peer.setRemoteDescription(sessionDescription);
 
     // Offer SDPの場合はAnswer SDPを作成
     if (sessionDescription.type === "offer") {
@@ -80,15 +80,19 @@ async function main() {
         console.log('connect');
 
         socket.on('requestSDPOffer', async () => {
-            console.log(`requestSDPOffer`);
             let sdpOffer = await createSDPOffer();
+            console.log(`requestSDPOffer: ${sdpOffer}`);
             socket.emit('responseSDPOffer', sdpOffer);
         });
 
         socket.on('broadcastSDPOffer', async (sdpOffer) => {
             console.log(`broadcastSDPOffer: ${sdpOffer}`);
-            let sdpAnswer = await receiveSDP(sdpOffer);
-            socket.emit('responseSDPAnswer', sdpAnswer);
+            if (sdpOffer != null) {
+                let sdpAnswer = await receiveSDP(sdpOffer);
+                if (sdpAnswer != null) {
+                    socket.emit('responseSDPAnswer', sdpAnswer);
+                }
+            }
         });
 
         socket.on('broadcastICE', async (ice) => {
