@@ -12,20 +12,26 @@
 </head>
 
 <body>
-	<div id="wrapper">
-		<div id="wrapper-other-video">
-			<video class="" id="other-video" autoplay></video>
-		</div>
-		<video class="rounded" id="my-video" autoplay muted></video>
+	<div id="wrapper" class="d-flex align-items-center justify-content-center">
+        <div class="card w-50">
+            <div class="card-body">
+                <form action="/room" method="get">
+                    <div class="mb-3">
+                        <input class="form-control form-control-lg" type="text" placeholder="roomID" name="r">
+                    </div>
+
+                    <div class="mb-3 text-center">
+                        <button type="submit" class="btn btn-primary">JOIN</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 	</div>
 
 	<!-- JS -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
 		integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
 		crossorigin="anonymous"></script>
-	<script src="socket.io.min.js"></script>
-	<script src="webrtc.js" type="module"></script>
-
 </body>
 
 </html>

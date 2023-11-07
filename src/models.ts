@@ -11,6 +11,7 @@ export type ServerToClientEvents = {
  * イベント受信時に使用する型定義
  */
 export type ClientToServerEvents = {
+  join: (roomId : string) => void;
   responseSDPOffer: (sdpOffer : string) => void;
   responseSDPAnswer: (sdpOffer : string) => void;
   broadcastICE: (ice : string) => void;

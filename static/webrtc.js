@@ -37,6 +37,9 @@ async function receiveICE(ice) {
 }
 
 async function main() {
+    // roomIdを取得
+    const roomId = new URL(window.location.href).searchParams.get('r');
+
     // 自身のビデオストリームを取得
     let myMediaStream = null;
     try {
@@ -78,6 +81,8 @@ async function main() {
 
     socket.on('connect', () => {
         console.log('connect');
+
+        socket.emit('join', roomId);
 
         socket.on('requestSDPOffer', async () => {
             let sdpOffer = await createSDPOffer();
