@@ -9,19 +9,22 @@ const httpServer = createServer(app);
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer);
 const path = require("path");
 
-io.on('connection', (socket) => {
+io.of('/').on('connection', (socket) => {
     console.log(`connect: ${socket.id}`);
 
     socket.on('join', (roomId) => {
         console.log(`join room: ${roomId}`);
         socket.join(roomId);
 
-        socket.emit('requestSDPOffer');
-        console.log(`requestSDPOffer`);
+        let num = io.of('/').adapter.rooms.get(roomId)?.size;
+        if (num && num >= 2) {
+            socket.emit('requestSDPOffer');
+            console.log(`requestSDPOffer`);
+        }
     })
 
     socket.on('responseSDPOffer', (sdpOffer) => {
-        console.log(`SDPOffer: ${sdpOffer}`);
+        console.log(`SDPOffer: ${sdpOffer.length}`);
         for (let room of socket.rooms) {
             if (room != socket.id) {
                 console.log(`broadcastSDPOffer: ${room}`);
@@ -30,7 +33,7 @@ io.on('connection', (socket) => {
         }
     });
     socket.on('responseSDPAnswer', (sdpOffer) => {
-        console.log(`SDPAnswer: ${sdpOffer}`);
+        console.log(`SDPAnswer: ${sdpOffer.length}`);
         for (let room of socket.rooms) {
             if (room != socket.id) {
                 console.log(`broadcastSDPOffer: ${room}`);
