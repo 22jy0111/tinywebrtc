@@ -42,14 +42,14 @@ io.of('/').on('connection', (socket) => {
         }
     });
     socket.on('broadcastICE', (ice) => {
-        console.log(`broadcastICE`);
-
+        console.log('broadcastICE start')
         for (let room of socket.rooms) {
             if (room != socket.id) {
                 console.log(`broadcastICE: ${room}`);
                 socket.broadcast.to(room).emit('broadcastICE', ice);
             }
         }
+        console.log('broadcastICE end')
     });
     socket.on('iceReceive', () => {
         console.log(`iceReceive`);
