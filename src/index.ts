@@ -13,50 +13,70 @@ io.of('/').on('connection', (socket) => {
     console.log(`connect: ${socket.id}`);
 
     socket.on('join', (roomId) => {
-        console.log(`join room: ${roomId}`);
         socket.join(roomId);
+        console.log(`join room: ${roomId}`);
 
         let num = io.of('/').adapter.rooms.get(roomId)?.size;
         if (num && num >= 2) {
-            socket.emit('requestSDPOffer');
-            console.log(`requestSDPOffer`);
+            console.log(`-------------------------------------`);
+            console.log(`START`);
+            console.log(`-------------------------------------`);
+            for (let room of socket.rooms) {
+                if (room != socket.id) {
+                    socket.broadcast.to(room).emit('requestSDPOffer');
+                    console.log(`server-send requestSDPOffer ${socket.id}`);
+                    break;
+                }
+            }
         }
     })
 
     socket.on('responseSDPOffer', (sdpOffer) => {
-        console.log(`SDPOffer: ${sdpOffer.length}`);
+        console.log(`client-send SDPOffer ${socket.id} length:${sdpOffer.length}`);
         for (let room of socket.rooms) {
             if (room != socket.id) {
-                console.log(`broadcastSDPOffer: ${room}`);
                 socket.broadcast.to(room).emit('broadcastSDPOffer', sdpOffer);
+                console.log(`server-send broadcastSDPOffer ${socket.id} room:${room}/${socket.rooms.size}`);
             }
         }
     });
+
     socket.on('responseSDPAnswer', (sdpOffer) => {
-        console.log(`SDPAnswer: ${sdpOffer.length}`);
+        console.log(`client-send SDPAnswer ${socket.id} length:${sdpOffer.length}`);
         for (let room of socket.rooms) {
             if (room != socket.id) {
-                console.log(`broadcastSDPOffer: ${room}`);
                 socket.broadcast.to(room).emit('broadcastSDPOffer', sdpOffer);
+                console.log(`server-send broadcastSDPOffer ${socket.id} room:${room}/${socket.rooms.size}`);
             }
         }
     });
+
     socket.on('broadcastICE', (ice) => {
-        console.log('broadcastICE start')
+        console.log(`client-send broadcastICE ${socket.id}`)
         for (let room of socket.rooms) {
             if (room != socket.id) {
-                console.log(`broadcastICE: ${room}`);
                 socket.broadcast.to(room).emit('broadcastICE', ice);
+                console.log(`server-send broadcastICE room:${room}/${socket.rooms.size}`);
             }
         }
-        console.log('broadcastICE end')
     });
+
+    socket.on('sdpAnswerReceive', () => {
+        console.log(`client-send sdpAnswerReceive ${socket.id}`);
+        for (let room of socket.rooms) {
+            if (room != socket.id) {
+                io.sockets.in(room).emit('requestICE');
+                console.log(`server-send requestICE room:${room}/${socket.rooms.size}`);
+            }
+        }
+    });
+
     socket.on('iceReceive', () => {
-        console.log(`iceReceive`);
+        console.log(`client-send iceReceive ${socket.id}`);
     });
 
     socket.on("disconnect", (reason) => {
-        console.log(`disconnected. reason: ${reason}`);
+        console.log(`disconnected: ${socket.id} reason: ${reason}`);
     });
 });
 

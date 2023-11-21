@@ -3,6 +3,7 @@
  */
 export type ServerToClientEvents = {
   requestSDPOffer: () => void;
+  requestICE: () => void;
   broadcastSDPOffer: (sdpOffer : string) => void;
   broadcastICE: (ice : string) => void;
 };
@@ -15,5 +16,6 @@ export type ClientToServerEvents = {
   responseSDPOffer: (sdpOffer : string) => void;
   responseSDPAnswer: (sdpOffer : string) => void;
   broadcastICE: (ice : string) => void;
+  sdpAnswerReceive: () => void;
   iceReceive: () => void;
 };

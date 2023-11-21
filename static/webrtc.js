@@ -1,21 +1,23 @@
 // WebRTCのコネクションオブジェクトを作成
 let peer = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
-let rtpSender = null;
 
 // 自身のICE Candidateの一覧
 const iceCandidates = [];
 
 // Offer SDPの作成処理
 async function createSDPOffer() {
-    const sessionDescription = await peer.createOffer();
+    const sessionDescription = await peer.createOffer({
+        iceRestart: true,
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+    });
     await peer.setLocalDescription(sessionDescription);
     return JSON.stringify(sessionDescription, null, 2);
 }
 
 // SDPの受け取り処理
-async function receiveSDP(sdp) {
+async function receiveSDP(sdp, socket) {
     const sessionDescription = JSON.parse(sdp);
-    console.log(sdp);
     await peer.setRemoteDescription(sessionDescription);
 
     // Offer SDPの場合はAnswer SDPを作成
@@ -25,15 +27,19 @@ async function receiveSDP(sdp) {
         await peer.setLocalDescription(sessionDescription);
         return JSON.stringify(sessionDescription, null, 2);
     }
-
+    console.log('send sdpAnswerReceive')
+    socket.emit('sdpAnswerReceive');
     return null;
 }
 
 // ICE Candidateの受け取り処理
 async function receiveICE(ice) {
+    console.log('recieve ice')
     const iceCandidates = JSON.parse(ice);
+    console.log('iceCandidates:');
+    //console.log(ice);
     for (const iceCandidate of iceCandidates) {
-        console.log(iceCandidate)
+        console.log('ice candidate')
         await peer.addIceCandidate(iceCandidate);
     }
 }
@@ -72,15 +78,8 @@ async function getMediaStream(ids) {
         return mediaStream;
     } catch (e) {
         console.log("Could not get media");
-        function getFakeStream() {
-            const canvas = document.createElement('canvas');
-            canvas.width = canvas.height = 1;
-            // NOTE: これがないとFirefoxが通らない
-            canvas.getContext('2d');
-            return vStream = canvas.captureStream();
-        }
 
-        return navigator.mediaDevices.getDisplayMedia();
+        return null;
     }
 }
 
@@ -132,7 +131,7 @@ async function main() {
     if (myMediaStream != null) {
         myVideo.srcObject = myMediaStream;
         myMediaStream.getTracks().forEach((track) => {
-            rtpSender = peer.addTrack(track, myMediaStream);
+            peer.addTrack(track, myMediaStream);
         });
     }
 
@@ -172,17 +171,17 @@ async function main() {
 
     // ICE Candidateが生成された時の処理
     peer.addEventListener("icecandidate", (event) => {
-        if (event.candidate === null) return;
+        if (event.candidate === null) {
+            console.log('ice candidate null')
+            return;
+        };
         iceCandidates.push(event.candidate);
-
-        let ice = JSON.stringify(iceCandidates, null, 2);
-        socket.emit("broadcastICE", ice);
-        console.log('ice candidate')
     });
 
     // Trackを取得した時の処理
     peer.addEventListener("track", (event) => {
-        console.log("get video")
+        console.log('get video stream.length ' + event.streams.length)
+        console.log(event)
         otherVideo.srcObject = event.streams[0];
     });
 
@@ -190,19 +189,21 @@ async function main() {
 
     socket.on("connect", () => {
         console.log("connect");
-
         socket.emit("join", roomId);
+        console.log(socket.id);
 
         socket.on("requestSDPOffer", async () => {
             let sdpOffer = await createSDPOffer();
-            console.log(`requestSDPOffer: ${sdpOffer}`);
+            console.log("requestSDPOffer:");
+            console.log(JSON.parse(sdpOffer));
             socket.emit("responseSDPOffer", sdpOffer);
         });
 
         socket.on("broadcastSDPOffer", async (sdpOffer) => {
-            console.log(`broadcastSDPOffer: ${sdpOffer}`);
+            console.log("broadcastSDPOffer:");
+            console.log(JSON.parse(sdpOffer));
             if (sdpOffer != null) {
-                let sdpAnswer = await receiveSDP(sdpOffer);
+                let sdpAnswer = await receiveSDP(sdpOffer, socket);
                 if (sdpAnswer != null) {
                     socket.emit("responseSDPAnswer", sdpAnswer);
                 }
@@ -211,8 +212,14 @@ async function main() {
 
         socket.on("broadcastICE", async (ice) => {
             console.log(`broadcastICE`);
+            console.log(JSON.parse(ice));
             await receiveICE(ice);
             socket.emit("iceReceive");
+        });
+
+        socket.on("requestICE", async () => {
+            socket.emit("broadcastICE", JSON.stringify(iceCandidates, null, 2));
+            console.log("requestICE");
         });
     });
 }
