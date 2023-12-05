@@ -33,6 +33,7 @@ html, body, #wrapper {
   display: block;
   width: auto;
   height: 100vh;
+  max-width: 100%;
 }
 
 @media screen and (orientation: portrait) {
