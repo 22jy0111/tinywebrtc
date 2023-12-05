@@ -7,7 +7,7 @@ const iceCandidates = [];
 // Offer SDPの作成処理
 async function createSDPOffer() {
     const sessionDescription = await peer.createOffer({
-        iceRestart: true,
+        //iceRestart: true,
         offerToReceiveAudio: true,
         offerToReceiveVideo: true
     });
@@ -183,6 +183,8 @@ async function main() {
         console.log('get video stream.length ' + event.streams.length)
         console.log(event)
         otherVideo.srcObject = event.streams[0];
+        // !TODO play intaractive !!!!
+        otherVideo.play();
     });
 
     const socket = io();
@@ -225,3 +227,12 @@ async function main() {
 }
 
 main();
+
+setInterval(() => {
+    let i = 0;
+    peer.getTransceivers().forEach(e => {
+        i++;
+        console.log(e.currentDirection);
+    })
+    console.log(i)
+}, 3000);
