@@ -125,14 +125,54 @@ async function main() {
     }));
 
     const myVideo = document.getElementById("my-video");
-    const otherVideo = document.getElementById("other-video");
+
+    // ミュートボタン
+    document.getElementById('muteBtn').addEventListener('click', (e) => {
+        e.currentTarget.getElementsByTagName('i')[0].classList.toggle('bi-volume-mute-fill')
+        e.currentTarget.getElementsByTagName('i')[0].classList.toggle('bi-volume-up-fill')
+
+        let isMuted = e.currentTarget.getElementsByTagName('i')[0].classList.contains('bi-volume-mute-fill')
+        let ov = document.getElementsByClassName('other-video');
+        for (let i = 0; i < ov.length; i++) {
+            ov[i].muted = isMuted;
+        }
+    });
+
+    //画面共有ボタン
+    document.getElementById('screenShareBtn').addEventListener('click', (e) => {
+        navigator.mediaDevices.getDisplayMedia().then(m => {
+            m.getTracks().forEach((track) => {
+                myVideo.srcObject = m;
+                peer.addTrack(track, m);
+                track.addEventListener('ended', streamReget);
+            })
+        })
+    });
 
     // 自身のビデオストリームを設定
     if (myMediaStream != null) {
         myVideo.srcObject = myMediaStream;
         myMediaStream.getTracks().forEach((track) => {
             peer.addTrack(track, myMediaStream);
+            track.addEventListener('ended', streamReget);
         });
+    }
+
+    async function streamReget() {
+        console.log('ended')
+        myMediaStream.getVideoTracks().forEach((track) => {
+            track.stop();
+        });
+
+        myMediaStream = await getMediaStream(getSelectDeviceId({
+            cameras: cameras,
+            audios: audios
+        }));
+
+        if (myMediaStream != null) {
+            myVideo.srcObject = myMediaStream;
+            myMediaStream.getTracks().forEach(track => peer.addTrack(track, myMediaStream));
+        }
     }
 
     // 変更されたとき
@@ -148,10 +188,9 @@ async function main() {
 
         if (myMediaStream != null) {
             myVideo.srcObject = myMediaStream;
-            myMediaStream.getTracks().forEach((track) => {
-                peer.addTrack(track, myMediaStream);
-            });
+            myMediaStream.getTracks().forEach(track => peer.addTrack(track, myMediaStream));
         }
+
     })
     audios.addEventListener("change", async () => {
         myMediaStream.getVideoTracks().forEach((track) => {
@@ -165,7 +204,7 @@ async function main() {
 
         if (myMediaStream != null) {
             myVideo.srcObject = myMediaStream;
-            myMediaStream.getTracks().forEach((track) => peer.addTrack(track, myMediaStream));
+            myMediaStream.getTracks().forEach(track => peer.addTrack(track, myMediaStream));
         }
     })
 
@@ -181,10 +220,22 @@ async function main() {
     // Trackを取得した時の処理
     peer.addEventListener("track", (event) => {
         console.log('get video stream.length ' + event.streams.length)
-        console.log(event)
-        otherVideo.srcObject = event.streams[0];
-        // !TODO play intaractive !!!!
-        otherVideo.play();
+        const isMuted = document.getElementById('muteBtn').getElementsByTagName('i')[0].classList.contains('bi-volume-mute-fill');
+
+        let oldv = document.getElementsByClassName('other-video');
+        for (let i = 0; i < oldv.length; i++) {
+            oldv[i].remove();
+        }
+
+        event.streams.forEach(s => {
+            let v = document.createElement('video');
+            v.autoplay = true;
+            v.muted = isMuted;
+            v.srcObject = s;
+            v.classList.add('col', 'rounded', 'p-0', 'm-1', 'other-video');
+            document.getElementById('wrapper-other-video').appendChild(v);
+            console.log('create video');
+        });
     });
 
     const socket = io();
@@ -194,12 +245,16 @@ async function main() {
         socket.emit("join", roomId);
         console.log(socket.id);
 
-        socket.on("requestSDPOffer", async () => {
+
+        async function connectionStart() {
             let sdpOffer = await createSDPOffer();
             console.log("requestSDPOffer:");
             console.log(JSON.parse(sdpOffer));
             socket.emit("responseSDPOffer", sdpOffer);
-        });
+        }
+
+        socket.on("requestSDPOffer", connectionStart);
+        peer.addEventListener('negotiationneeded', connectionStart)
 
         socket.on("broadcastSDPOffer", async (sdpOffer) => {
             console.log("broadcastSDPOffer:");
@@ -227,12 +282,3 @@ async function main() {
 }
 
 main();
-
-setInterval(() => {
-    let i = 0;
-    peer.getTransceivers().forEach(e => {
-        i++;
-        console.log(e.currentDirection);
-    })
-    console.log(i)
-}, 3000);
